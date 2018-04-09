@@ -1,4 +1,6 @@
 import pickle
+import random
+import string
 
 def get_credentials():
     username = input('Please type your user name: ')
@@ -8,7 +10,8 @@ def get_credentials():
 def authenticate(username, password, pwdb):
     status = False
     if username in pwdb:
-        if pwdb[username] == password:
+        hash, salt = pwdb[username]
+        if hash == hashing(password, salt):
             status = True
     else:
         ans = input('User not known. Add it to db? [y/n]')
@@ -19,7 +22,9 @@ def authenticate(username, password, pwdb):
 
 def add_user(username, password, pwdb):
     if username not in pwdb:
-        pwdb[username] = password
+        salt = salt_f(5)
+        hash = hashing(password, salt)
+        pwdb[username] = (hash,salt)
         write_pwdb(pwdb)
     else:
         print('User already known!')
@@ -38,8 +43,17 @@ def write_pwdb(pwdb):
     with open(pwdb_path, 'wb') as pwdb_file:
         pickle.dump(pwdb, pwdb_file)
 
+def hashing(password, salt):
+    val = 0
+    for i,c in enumerate(password+salt):
+        val+=ord(c)*i
+    return val
+
+def salt_f(m):
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=m))
+
 def get_path():
-    return '/tmp/pwdb.pkl'
+    return 'pwdb.pkl'
 
 pwdb = read_pwdb()
 username, password = get_credentials()
@@ -47,4 +61,3 @@ if authenticate(username, password, pwdb):
     print(pwdb)
 else:
     print('No match!')
-
